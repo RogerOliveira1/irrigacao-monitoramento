@@ -3,16 +3,139 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Monitoramento da Irrigação</title>
-</head>
-<body>
-  <h1>Monitoramento da Irrigação</h1>
-  <p>Site publicado com sucesso na Azure.</p>
+  <title>Monitoramento da Irrigacao</title>
 
-  <h2>Status</h2>
-  <p>Umidade: <span id="umidade">--</span></p>
-  <p>Bomba: <span id="bomba">--</span></p>
-  <p>Modo: <span id="modo">--</span></p>
-  <p>Serial: <span id="serial">--</span></p>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f5f7;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 26px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    }
+
+    .label {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .valor {
+      font-size: 36px;
+      font-weight: bold;
+    }
+
+    .status {
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .online {
+      color: green;
+    }
+
+    .offline {
+      color: red;
+    }
+
+    .pequeno {
+      font-size: 13px;
+      color: #777;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Monitoramento da Irrigacao</h1>
+
+    <div class="card">
+      <div class="label">Umidade atual</div>
+      <div class="valor" id="umidade">--%</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Comando rele/bomba</div>
+      <div class="status" id="bomba">--</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Modo</div>
+      <div class="status" id="modo">--</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Serial</div>
+      <div class="status" id="serial">--</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Sistema</div>
+      <div class="status" id="sistema">--</div>
+      <div class="pequeno" id="atualizadoEm">Ultima atualizacao: --</div>
+    </div>
+  </div>
+
+  <script>
+    async function carregarStatus() {
+      try {
+        const resposta = await fetch("/api/status", { cache: "no-store" });
+        const status = await resposta.json();
+
+        document.getElementById("umidade").textContent =
+          status.umidade !== null && status.umidade !== undefined
+            ? status.umidade + "%"
+            : "--%";
+
+        document.getElementById("bomba").textContent = status.bomba || "--";
+        document.getElementById("modo").textContent = status.modo || "--";
+        document.getElementById("serial").textContent = status.serial || "--";
+
+        if (status.atualizadoEm) {
+          const data = new Date(status.atualizadoEm);
+          const agora = new Date();
+          const diferencaSegundos = Math.floor((agora - data) / 1000);
+
+          document.getElementById("atualizadoEm").textContent =
+            "Ultima atualizacao: " + data.toLocaleString("pt-BR");
+
+          if (diferencaSegundos <= 120) {
+            document.getElementById("sistema").textContent = "Online";
+            document.getElementById("sistema").className = "status online";
+          } else {
+            document.getElementById("sistema").textContent = "Offline";
+            document.getElementById("sistema").className = "status offline";
+          }
+        } else {
+          document.getElementById("sistema").textContent = "Aguardando dados";
+          document.getElementById("sistema").className = "status offline";
+        }
+      } catch (erro) {
+        document.getElementById("sistema").textContent = "Erro ao carregar";
+        document.getElementById("sistema").className = "status offline";
+      }
+    }
+
+    carregarStatus();
+    setInterval(carregarStatus, 10000);
+  </script>
 </body>
 </html>
